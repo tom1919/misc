@@ -50,7 +50,7 @@ def esm_mase(ts):
     
     for i in range(test_n,0,-1): #(60,59,58...3,2,1)
         # moving window, walk foward 1 step 
-        train = np.asarray(ts[0+j:len(ts)-i])
+        train = np.asarray(ts[j:len(ts)-i])
         j= j+1
         
         # 3 different types of ES models. Each one makes 1 step ahead predictions
@@ -102,11 +102,43 @@ mase_df.loc[(mase_df.ses < 1) | (mase_df.trend < 1) | (mase_df.dtrend < 1)]
 
 
 
+#%%
 
 
+def esm_forecast(ts):
+    
+    ts = ts.to_frame()
+    # create a column for log returns
+    ts['log_return'] = np.log(ts.iloc[:,0]) - np.log(ts.iloc[:,0].shift(1))
+    
+    # list to store 1-step ahead forecasts. 60 days used for training and first 
+    # row of returns is NA so the first 61st obs are not forecasted. 
+    # 0s used as placeholder
+    forecast = [0]*61 
+    start = 1
+    end = 61
 
+    for i in range(len(ts)-61):
+        # rolling window of 60 obs used for train set
+        train = np.asarray(ts.log_return[start:end])
+        start = start+1
+        end = end+1
+        
+        # append the 1 step ahead prediction to forecast
+        forecast.append(SimpleExpSmoothing(train).fit(optimized = True).\
+                        forecast(1)[0])
+    
+    # create a col for forecasted prices. 
+    ts['forecast'] = np.exp(forecast) * ts.iloc[:,0].shift(1)
+    
+    # return a series of forecasted prices that is the same length as orginal 
+    # ts but the rows 0-60 aren't valid forecasts. they were used for training
+    return(ts['forecast'])
 
+#%%
+ts = aapl.AAPL
 
+esm_forecast(ts)
 
 
 
