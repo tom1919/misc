@@ -1,0 +1,87 @@
+Power & T-Test
+================
+
+Example code for A/B test for difference between means using a t-test
+
+Set up population parameters
+
+``` r
+# Population mean. This typically comes from the historical data
+mu <- 30 
+# Pop. standard deviation. Typically comes from historical data
+theta <- mu/5 
+# The acutal difference between the two population mean parameters. Because we 
+# control this, we know if we create an error
+act_lift <- 0.05 
+act_diff <- mu*act_lift
+# When designing a test, this typically is the average historical daily amount 
+daily_sample_amount <- 25 
+```
+
+Set of Design of Experiment parameters
+
+``` r
+# the frequency at which a false positive conclusion is made
+alpha <- 0.05 
+# the frequency at which a false negative conclusion is made
+beta <- 0.20 
+# the frequencey at which a true positive conclusion is made
+power <- 1 - beta 
+# minimum detectable lift to design test for 
+mdl <- 0.05 
+# equal sample sizes in each variant 
+smp_ratio <- 1 
+#type of test
+direction <- 'two.sided' 
+```
+
+Power Calculation
+
+``` r
+#Do a power calculation to determine the minimum sample size 
+min_n <- power.t.test(n=NULL, delta=(mu*mdl), sd=theta, sig.level=alpha, 
+                      power=power, type=c("two.sample"), 
+                      alternative=c(direction))
+min_n <- ceiling(min_n$n) + 1 #note, min_n is per variant
+```
+
+Duration of test
+
+``` r
+duration <- ceiling((min_n*2)/daily_sample_amount)
+
+# Under this scenario, we need to collect a total of 254*2 = 508 samples 
+# which will take 21 days
+```
+
+Create control and test group
+
+``` r
+# Get two random samples (in real life this is where you collect your data)
+control <- rnorm(min_n,mu,theta)
+variant <- rnorm(min_n,mu*(1+act_lift),theta)
+```
+
+T-test
+
+``` r
+# Get observed stats and frquentists t test results
+obs_mu_diff <- mean(variant) - mean(control)
+obs_lift <- (mean(variant) - mean(control))/mean(control)
+# p - value. Probability of getting test stat as extreme as the one observed
+# under the null hypothesis. If this probability is small then it provides 
+# evidence that the null is not true and there is a difference between means.
+result_f <- t.test(control, variant, var.equal=TRUE, 
+                   alternative=c(direction))$p.value
+```
+
+Result
+
+``` r
+# Determine if there's a statistial difference between treatment and control
+if(result_f <= alpha){
+  winner = 1
+} else {
+  winner = 0
+}
+```
