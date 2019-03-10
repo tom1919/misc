@@ -8,4 +8,4 @@
 	- forecast variance of stock returns
 	
 - power_ttest.Rmd
- - Example code for A/B test for difference between means using a t-test
+	- Example code for A/B test for difference between means using a t-test
