@@ -1,5 +1,4 @@
 # misc
-<<<<<<< HEAD
 
 - esm_stock_forecasting.py
 	- 1 day ahead forecasts of stock prices using exponential smoothing models
