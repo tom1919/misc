@@ -40,7 +40,7 @@ Power Calculation
 min_n <- power.t.test(n=NULL, delta=(mu*mdl), sd=theta, sig.level=alpha, 
                       power=power, type=c("two.sample"), 
                       alternative=c(direction))
-min_n <- ceiling(min_n$n) + 1 #note, min_n is per variant
+min_n <- ceiling(min_n$n) #note, min_n is per variant
 ```
 
 Duration of test 
