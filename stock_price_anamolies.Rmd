@@ -1,0 +1,93 @@
+---
+title: "Untitled"
+output: html_document
+---
+
+```{r}
+library(forecast)
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+library(MLmetrics)
+```
+
+make plots of loess curve, and residuals
+```{r}
+stocks <- readRDS("./data/stocks_djia.rds")
+
+```
+
+```{r}
+st1 <- stocks[,1] %>% as.data.frame() %>%
+  rename(price = 1) %>% 
+  mutate(rn = row_number())
+
+st1$price[17] <- st1$price[17]*1.2
+st1$price[276] <- st1$price[276]*1.2
+st1$price[982] <- st1$price[982]*1.2
+st1$price[1254] <-st1$price[1254]*1.2
+```
+
+```{r}
+mod <- supsmu(x = st1$rn, y = st1$price)
+
+resid <- st1$price - mod$y
+
+resid.q <- quantile(resid, prob = c(0.25, 0.75), na.rm = TRUE)
+iqr <- diff(resid.q)
+limits <- resid.q + 3 * iqr * c(-1, 1)
+
+outliers <- which((resid < limits[1]) | (resid > limits[2]))
+outliers
+```
+
+
+```{r}
+
+
+df <- st1
+df$pred <- mod$y
+df$lag <- lag(st1$price)
+
+df <- df %>% slice(-1)
+
+df_long <- df %>% gather(key = type, value = price, - rn)
+```
+
+```{r}
+ggplot(df_long, aes(x = rn, y = price, color = type)) +
+  geom_line()
+```
+
+
+
+
+
+```{r}
+foo <- loess(price ~ rn, data = st1, degree = 2, span = .1)
+
+pred = predict(foo, st1$rn)
+
+df <- st1
+df$pred <- pred
+df$lag <- lag(st1$price)
+
+df <- df %>% slice(-1)
+
+df_long <- df %>% gather(key = type, value = price, - rn)
+```
+
+```{r}
+ggplot(df_long, aes(x = rn, y = price, color = type)) +
+  geom_line()
+```
+
+```{r}
+MAE(df$price, df$pred)
+MAE(df$price, df$lag)
+```
+
+```{r}
+tsoutliers
+```
+
