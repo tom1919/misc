@@ -1,0 +1,62 @@
+---
+title: "Untitled"
+output: html_document
+---
+
+```{r}
+library(CVXR)
+library(dplyr)
+```
+
+```{r}
+# orginal weight of each stock (10 stocks in this example)
+orig_weight <- c(0.15,0.25,0.15,0.05,0.20,0,0.1,0,0.1,0)
+
+# sort by sector first and order variables by sector
+# # 3 sectors in this toy example
+w1 <- Variable(3)
+w2 <- Variable(2)
+w3 <- Variable(5)
+
+# 1 binary var for each stock to control max stocks in the index
+b <- Bool(10)
+
+w <- vstack(w1, w2, w3)
+
+# z scores of each stock
+Z <- matrix(c(1, 2, -0.1, -3, 1.5, 1.45, 2.8, -.2, -2.2, 1.5), nrow = 1)
+
+# max the weighted sum of z scores
+objective <- Maximize(Z %*% w)
+
+w_cnt <- c()
+
+constraints <- list(sum_entries(w) == 1, # sum weights = 1
+                    #w >= c(rep(0,10)), # weights greater than 0
+                    #w >= c(0,rep(0,9)), # indiv weight constraint. lower bound
+                    sum_entries(w2) >= .3, # sector constraint, one for each sector
+                    sum_entries(w1) >= .3,
+                    w >= 0, # weights greater than 0
+                    w <= b, # connect the weights w/ boolean vars
+                    sum_entries(b) == 2, #, # it's <= n, cant do == 
+                    sum_entries(abs(w - orig_weight)) <= 0.50 # turnover con
+                   )
+
+
+
+problem <- Problem(objective, constraints)
+
+result <- solve(problem)
+
+result$value
+
+sol <- result$getValue(w) %>% t() %>% c()
+sol %>% round(.,9)
+```
+
+```{r}
+sum(sol)
+sum((abs(sol-orig_weight)))
+sum(sol*Z %>% c())
+```
+
