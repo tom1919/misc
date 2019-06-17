@@ -68,7 +68,7 @@ def cap_values(df, cols):
     # add the cols with capped values to the input df
     df2 = pd.concat([df, df2], axis=1)
     
-    return(df2)
+    return(df2, capped_col_names)
 
 
 def grouped_standardize(df, group_cols, std_cols): 
@@ -106,7 +106,7 @@ def grouped_standardize(df, group_cols, std_cols):
     # add the cols with z values to the input df
     df2 = pd.concat([df, df2], axis=1)
     
-    return(df2)
+    return(df2, z_col_names)
 
 def cap_vals_3(df, cols): 
     '''
@@ -132,30 +132,30 @@ def cap_vals_3(df, cols):
        df[col2] = np.select([df[col] < -3, df[col] > 3], [-3, 3,], 
                             default = df[col])
     
-    return(df)
+    return(df, cols_capped)
 #%%
 
 # cap values to the 2nd and 98th percentile
 cols = ['data1', 'data2', 'data3']  
-df2 = cap_values(df, cols)
+df2, cols = cap_values(df, cols)
 
 # group standardize (z score) the capped values
-capped_cols = [col + '_capped' for col in cols]
+#capped_cols = [col + '_capped' for col in cols]
 group_cols = ['group1', 'group2']
-df2 = grouped_standardize(df2, group_cols, capped_cols)
+df2, cols = grouped_standardize(df2, group_cols, cols)
 
 # cap z scores to -+ 3
-capped_z = [col + '_z' for col in capped_cols]
-df2 = cap_vals_3(df2, capped_z)
+#capped_z = [col + '_z' for col in capped_cols]
+df2, cols = cap_vals_3(df2, cols)
 
 # group standardize the capped z scores with diff grouping
-capped_z_3 = [col + '_cap3' for col in capped_z]
+# capped_z_3 = [col + '_cap3' for col in capped_z]
 group_cols2 = ['group1', 'group3']
-df2 = grouped_standardize(df2, group_cols2, capped_z_3)
+df2, cols = grouped_standardize(df2, group_cols2, cols)
 
 # cap the z scores to -+3
-capped_z_3_z = [col + '_z' for col in capped_z_3]
-df2 = cap_vals_3(df2, capped_z_3_z)
+# capped_z_3_z = [col + '_z' for col in capped_z_3]
+df2, cols = cap_vals_3(df2, cols)
 
 #%%
 
